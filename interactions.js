@@ -434,7 +434,6 @@ function initVoiceRecorder(containerId) {
     const statusEl = container.querySelector('.rec-status');
     const barsContainer = container.querySelector('.recorder-visual');
     const playbackEl = container.querySelector('.rec-playback');
-    const playBtn = container.querySelector('.rec-play-btn');
     const retakeBtn = container.querySelector('.rec-retake-btn');
 
     // Create waveform bars
@@ -471,42 +470,14 @@ function initVoiceRecorder(containerId) {
                 if (e.data.size > 0) audioChunks.push(e.data);
             };
             mediaRecorder.onstop = () => {
-                const mimeType = audioChunks.length > 0 ? audioChunks[0].type : 'audio/webm';
+                const mimeType = mediaRecorder.mimeType || 'audio/mp4';
                 recordedBlob = new Blob(audioChunks, { type: mimeType });
                 stream.getTracks().forEach(t => t.stop());
 
                 if (playingAudio) {
                     playingAudio.pause();
                 }
-                playingAudio = new Audio(URL.createObjectURL(recordedBlob));
-
-                const currEl = document.getElementById('recCurrTime');
-                const durEl = document.getElementById('recTotalTime');
-                const fillEl = document.getElementById('recProgressFill');
-
-                playingAudio.addEventListener('loadedmetadata', () => {
-                    if (durEl && isFinite(playingAudio.duration)) {
-                        durEl.textContent = formatTime(playingAudio.duration);
-                    } else if (durEl) {
-                        const elapsed = Math.floor((Date.now() - recStartTime) / 1000);
-                        durEl.textContent = formatTime(elapsed);
-                    }
-                });
-
-                playingAudio.addEventListener('timeupdate', () => {
-                    if (currEl) currEl.textContent = formatTime(playingAudio.currentTime);
-                    let dur = playingAudio.duration;
-                    if (!isFinite(dur)) dur = Math.floor((Date.now() - recStartTime) / 1000);
-                    if (fillEl && dur > 0) {
-                        fillEl.style.width = (playingAudio.currentTime / dur * 100) + '%';
-                    }
-                });
-
-                playingAudio.addEventListener('ended', () => {
-                    playBtn.textContent = '▶';
-                    if (fillEl) fillEl.style.width = '0%';
-                    if (currEl) currEl.textContent = '0:00';
-                });
+                // Hapus logic playback timer karena UI-nya sudah dihilangkan
 
                 playbackEl.classList.add('show');
                 playbackEl.style.display = 'flex';
@@ -557,33 +528,6 @@ function initVoiceRecorder(containerId) {
         draw();
     }
 
-    if (playBtn) {
-        const wrapEl = document.getElementById('recProgressWrap');
-
-        playBtn.addEventListener('click', () => {
-            if (!playingAudio) return;
-            if (!playingAudio.paused) {
-                playingAudio.pause();
-                playBtn.textContent = '▶';
-            } else {
-                playingAudio.play();
-                playBtn.textContent = '⏸';
-            }
-        });
-
-        if (wrapEl) {
-            wrapEl.addEventListener('click', e => {
-                if (!playingAudio) return;
-                let dur = playingAudio.duration;
-                if (!isFinite(dur)) dur = Math.floor((Date.now() - recStartTime) / 1000);
-                if (dur > 0) {
-                    const r = wrapEl.getBoundingClientRect();
-                    playingAudio.currentTime = ((e.clientX - r.left) / r.width) * dur;
-                }
-            });
-        }
-    }
-
     if (retakeBtn) {
         retakeBtn.addEventListener('click', () => {
             if (playingAudio) {
@@ -597,11 +541,6 @@ function initVoiceRecorder(containerId) {
             isRecording = false;
             recordedBlob = null;
             audioChunks = [];
-            const currEl = document.getElementById('recCurrTime');
-            const fillEl = document.getElementById('recProgressFill');
-            if (fillEl) fillEl.style.width = '0%';
-            if (currEl) currEl.textContent = '0:00';
-            playBtn.textContent = '▶️';
             clearInterval(recTimerInterval);
         });
     }
@@ -630,8 +569,8 @@ function initVoiceRecorder(containerId) {
 
                 const data = {
                     type: 'voice',
-                    filename: 'voice_' + new Date().getTime() + (recordedBlob.type.includes('mp4') ? '.mp4' : '.webm'),
-                    mimeType: recordedBlob.type || 'audio/webm',
+                    filename: 'voice_' + new Date().getTime() + (mimeType.includes('mp4') ? '.mp4' : '.webm'),
+                    mimeType: mimeType,
                     data: base64data
                 };
 
@@ -1442,26 +1381,27 @@ function initPhotobooth(containerId) {
                 compCtx.drawImage(sigPad, sigX, sigY, sigW, sigH);
             }
 
-            const dataURL = compositeCanvas.toDataURL('image/png');
+            // Gunakan JPEG dengan kompresi 80% agar tidak terlalu besar dan mudah terkirim di mobile
+            const dataURL = compositeCanvas.toDataURL('image/jpeg', 0.8);
 
             const a = document.createElement('a');
             a.href = dataURL;
-            a.download = 'foto-ktp-sweet17.png';
+            a.download = 'foto-ktp-sweet17.jpg';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
 
-            if (GAS_URL === "ISI_URL_WEB_APP_DISINI") {
+            if (typeof GAS_URL === 'undefined' || GAS_URL === "ISI_URL_WEB_APP_DISINI") {
                 alert('Download berhasil! Database belum disetup.');
-                savePhotoBtn.innerHTML = '✅ Selesai';
+                savePhotoBtn.innerHTML = '✅ Terkirim!';
                 return;
             }
 
             const base64data = dataURL.split(',')[1];
             const payload = {
                 type: 'photo',
-                filename: 'ktp_' + new Date().getTime() + '.png',
-                mimeType: 'image/png',
+                filename: 'ktp_' + new Date().getTime() + '.jpg',
+                mimeType: 'image/jpeg',
                 data: base64data
             };
 
@@ -1470,9 +1410,9 @@ function initPhotobooth(containerId) {
                 body: JSON.stringify(payload),
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }
             }).then(() => {
-                savePhotoBtn.innerHTML = '✅ Tersimpan ke Database!';
+                savePhotoBtn.innerHTML = '✅ Terkirim!';
             }).catch(() => {
-                savePhotoBtn.innerHTML = '❌ Upload DB Gagal';
+                savePhotoBtn.innerHTML = '❌ Gagal Terkirim';
                 setTimeout(() => savePhotoBtn.innerHTML = originalText, 2000);
             });
         };
