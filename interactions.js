@@ -467,9 +467,12 @@ function initVoiceRecorder(containerId) {
 
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
-            mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) audioChunks.push(e.data);
+            };
             mediaRecorder.onstop = () => {
-                recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const mimeType = audioChunks.length > 0 ? audioChunks[0].type : 'audio/webm';
+                recordedBlob = new Blob(audioChunks, { type: mimeType });
                 stream.getTracks().forEach(t => t.stop());
 
                 if (playingAudio) {
@@ -627,8 +630,8 @@ function initVoiceRecorder(containerId) {
 
                 const data = {
                     type: 'voice',
-                    filename: 'voice_' + new Date().getTime() + '.webm',
-                    mimeType: 'audio/webm',
+                    filename: 'voice_' + new Date().getTime() + (recordedBlob.type.includes('mp4') ? '.mp4' : '.webm'),
+                    mimeType: recordedBlob.type || 'audio/webm',
                     data: base64data
                 };
 
