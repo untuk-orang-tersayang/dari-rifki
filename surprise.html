@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a1a">
+    <title>Surprise For You 🎁</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        *, *::before, *::after {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            min-height: 100vh;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            background-image: radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.08), transparent 30%),
+                              radial-gradient(circle at 20% 80%, rgba(52, 211, 153, 0.08), transparent 30%);
+        }
+
+        .main { max-width: 500px; margin: 0 auto; position: relative; z-index: 5; }
+        
+        .scratch-card-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 24px;
+            padding: 24px;
+            margin-top: 30px;
+            position: relative;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .scratch-wrap {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .secret-letter {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(232, 67, 147, 0.15));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px dashed var(--accent-gold);
+        }
+        .secret-letter p {
+            font-family: var(--font-script);
+            font-size: 1.4rem;
+            color: var(--accent-pink);
+            line-height: 1.5;
+        }
+        #scratchCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 10;
+            cursor: pointer;
+            touch-action: none;
+            border-radius: 16px;
+        }
+
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        .confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 10000; overflow: hidden; }
+    </style>
+</head>
+<body>
+
+<div class="confetti-container" id="confetti"></div>
+
+<main class="main">
+    <section class="page-hero">
+        <div class="page-hero-emoji">🎁</div>
+        <h1 class="page-hero-title">Surprise!</h1>
+        <p class="page-hero-sub">Games & Hadiah</p>
+        <p class="page-hero-desc">Mainkan game kecil ini untuk mendapatkan hadiah kejutan spesial dariku! ✨</p>
+    </section>
+
+    <!-- SPIN WHEEL -->
+    <section class="interactive-section reveal">
+        <span class="section-label">🎡 Spin the Wheel</span>
+        <h2 class="section-title">Putar Roda Keberuntunganmu</h2>
+        <p class="section-text">Tap tombol putar untuk melihat hadiah apa yang kamu dapatkan hari ini!</p>
+        
+        <div class="wheel-container">
+            <canvas class="wheel-canvas" id="wheelCanvas" width="280" height="280"></canvas>
+            <div class="wheel-pointer"></div>
+        </div>
+        
+        <button class="spin-btn" id="spinBtn">Putar Sekarang! 🎰</button>
+        
+        <div class="spin-result" id="spinResult"></div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- SCRATCH CARD -->
+    <section class="interactive-section reveal">
+        <span class="section-label">🎟️ Kartu Gosok</span>
+        <h2 class="section-title">Gosok Kartu Rahasia</h2>
+        <p class="section-text">Usap area di bawah ini untuk melihat pesan rahasia yang tersembunyi.</p>
+        
+        <div class="scratch-card-container">
+            <div class="scratch-wrap">
+                <canvas id="scratchCanvas"></canvas>
+                <div class="secret-letter" id="secretLetter">
+                    <span style="font-size: 2.5rem; margin-bottom: 10px;">🥺</span>
+                    <p>Will you be mine forever?</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="page-footer-spacer"></div>
+</main>
+
+<script src="interactions.js"></script>
+<script src="nav.js"></script>
+<script>
+    // Init Spin Wheel and Scratch Card from interactions.js
+    if (typeof initSpinWheel === 'function') initSpinWheel('wheelCanvas', 'spinBtn', 'spinResult');
+    if (typeof initScratchCard === 'function') initScratchCard('scratchCanvas', 'secretLetter');
+
+    // Confetti helper
+    function createConfetti() {
+        const c = document.getElementById('confetti');
+        if(!c) return;
+        const colors = ['#ff6b9d','#a855f7','#fbbf24','#e84393','#667eea','#34d399','#f97316'];
+        for (let i = 0; i < 45; i++) {
+            const p = document.createElement('div');
+            p.className = 'confetti-piece';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.background = colors[Math.floor(Math.random() * colors.length)];
+            p.style.animationDelay = Math.random() * 2 + 's';
+            p.style.animationDuration = (3 + Math.random() * 3) + 's';
+            p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+            p.style.width = (5 + Math.random() * 8) + 'px';
+            p.style.height = (8 + Math.random() * 14) + 'px';
+            p.style.position = 'absolute';
+            p.style.top = '-20px';
+            p.style.opacity = '0';
+            p.style.animation = 'confettiFall forwards';
+            p.style.animationDuration = (3 + Math.random() * 3) + 's';
+            p.style.animationDelay = Math.random() * 2 + 's';
+            c.appendChild(p);
+            setTimeout(() => p.remove(), 7000);
+        }
+    }
+    window.createConfetti = createConfetti;
+
+    // Add confetti keyframes if not exists
+    if (!document.getElementById('confetti-style')) {
+        const style = document.createElement('style');
+        style.id = 'confetti-style';
+        style.innerHTML = `@keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg) scale(0.3); opacity: 0; } }`;
+        document.head.appendChild(style);
+    }
+
+    const obs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('visible');
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>

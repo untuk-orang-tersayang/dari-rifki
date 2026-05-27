@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a1a">
+    <title>Love Letters 💌</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        *, *::before, *::after {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            min-height: 100vh;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            background-image: radial-gradient(circle at 15% 50%, rgba(168, 85, 247, 0.08), transparent 25%),
+                              radial-gradient(circle at 85% 30%, rgba(232, 67, 147, 0.08), transparent 25%);
+        }
+
+        .main { max-width: 500px; margin: 0 auto; position: relative; z-index: 5; }
+        .section { padding: 50px 24px; text-align: center; }
+
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+<main class="main">
+    <section class="page-hero">
+        <div class="page-hero-emoji">💌</div>
+        <h1 class="page-hero-title">Love Letters</h1>
+        <p class="page-hero-sub">Pesan dari hatiku</p>
+        <p class="page-hero-desc">Beberapa surat cinta spesial yang aku tulis khusus untuk kamu baca hari ini. Tap amplop untuk membukanya.</p>
+    </section>
+
+    <section class="section reveal">
+        <div class="letters-list">
+            <div class="letter-envelope" onclick="openLetter(0)">
+                <div class="letter-envelope-header">
+                    <span class="letter-envelope-icon">💝</span>
+                    <h3 class="letter-envelope-title">Surat Pertama</h3>
+                </div>
+                <p class="letter-envelope-preview">Tentang hari dimana kita pertama kali bertemu...</p>
+                <span class="letter-envelope-tag">Tap untuk buka</span>
+            </div>
+            
+            <div class="letter-envelope" onclick="openLetter(1)">
+                <div class="letter-envelope-header">
+                    <span class="letter-envelope-icon">✨</span>
+                    <h3 class="letter-envelope-title">Untuk Cintaku</h3>
+                </div>
+                <p class="letter-envelope-preview">Kenapa kamu begitu spesial buatku...</p>
+                <span class="letter-envelope-tag">Tap untuk buka</span>
+            </div>
+
+            <div class="letter-envelope" onclick="openLetter(2)">
+                <div class="letter-envelope-header">
+                    <span class="letter-envelope-icon">🎂</span>
+                    <h3 class="letter-envelope-title">Happy Birthday</h3>
+                </div>
+                <p class="letter-envelope-preview">Harapanku di hari ulang tahunmu...</p>
+                <span class="letter-envelope-tag">Tap untuk buka</span>
+            </div>
+        </div>
+    </section>
+    
+    <div class="page-footer-spacer"></div>
+</main>
+
+<!-- LETTER MODAL -->
+<div class="letter-modal" id="letterModal">
+    <div class="letter-modal-content">
+        <button class="letter-modal-close" onclick="closeLetter()">✕</button>
+        <div class="letter-modal-body" id="letterBody"></div>
+        <div class="letter-modal-sign">— Your Rifki ♡</div>
+    </div>
+</div>
+
+<script src="interactions.js"></script>
+<script src="nav.js"></script>
+<script>
+    const letters = [
+        "<p>Hai kesayanganku, Amma,</p><p>Aku masih ingat dengan sangat jelas hari di mana semesta mempertemukan kita. Saat mata kita berserobok, rasanya seperti seluruh dunia berhenti berputar dan hanya ada kamu di hadapanku.</p><p>Senyummu hari itu mengalihkan duniaku, dan sejak saat itu, aku tahu kamu akan menjadi bagian terpenting dalam hidupku. Terima kasih sudah hadir dan menjadikanku pria paling beruntung.</p>",
+        "<p>Untuk cintaku yang paling manis, Sayang,</p><p>Kadang aku merenung, kebaikan apa yang pernah kulakukan hingga Tuhan mengirimkan bidadari sepertimu kepadaku. Kamu begitu baik, cantik, dan selalu penuh perhatian.</p><p>Pelukanmu adalah tempatku pulang, dan senyummu adalah obat dari segala lelahku. Kamu bukan sekadar kekasih, tapi belahan jiwa dan rumah bagi hatiku. Aku sangat bersyukur memilikimu, selalu dan selamanya.</p>",
+        "<p>Selamat ulang tahun yang ke-17, sayangku! 🎉</p><p>Di hari yang sangat spesial ini, doaku hanya satu: semoga kamu selalu dikelilingi kebahagiaan yang melimpah dan kesehatan yang tak ternilai.</p><p>Teruslah bersinar dan raih semua mimpimu. Apapun yang terjadi, ingatlah bahwa aku akan selalu ada di sisimu, mendukungmu, dan mencintaimu tanpa batas. I love you to the moon and beyond! 💗</p>"
+    ];
+
+    const modal = document.getElementById('letterModal');
+    const body = document.getElementById('letterBody');
+    let isTyping = false;
+
+    async function openLetter(index) {
+        if (isTyping) return;
+        modal.classList.add('open');
+        body.innerHTML = '';
+        if (navigator.vibrate) navigator.vibrate(50);
+        
+        // Convert html string to text for typing effect
+        const text = letters[index].replace(/<p>/g, '').replace(/<\/p>/g, '\n\n').trim();
+        
+        isTyping = true;
+        await typeText(body, text, 30);
+        isTyping = false;
+        
+        // After typing, restore HTML formatting (optional, but looks better)
+        body.innerHTML = letters[index];
+    }
+
+    function closeLetter() {
+        if (isTyping) return;
+        modal.classList.remove('open');
+        if (navigator.vibrate) navigator.vibrate(30);
+    }
+
+    const obs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('visible');
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>

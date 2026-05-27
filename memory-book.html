@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a1a">
+    <meta name="description" content="Memory Book — Koleksi momen indah kita bersama.">
+    <title>Our Memory Book 📖💕</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        *, *::before, *::after {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            min-height: 100vh;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        .main { max-width: 500px; margin: 0 auto; position: relative; z-index: 5; }
+
+        /* Background effects */
+        .bg-glow {
+            position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0;
+        }
+        .bg-glow-1 { width: 250px; height: 250px; background: rgba(168,85,247,0.08); top: 10%; right: -80px; }
+        .bg-glow-2 { width: 200px; height: 200px; background: rgba(232,67,147,0.06); top: 50%; left: -100px; }
+        .bg-glow-3 { width: 180px; height: 180px; background: rgba(251,191,36,0.05); bottom: 10%; right: -60px; }
+
+        .particles-box { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+        .particle { position: absolute; opacity: 0; animation: pFloat 7s ease-in-out infinite; }
+        @keyframes pFloat { 0%{transform:translateY(100vh) rotate(0);opacity:0}10%{opacity:.5}90%{opacity:.3}100%{transform:translateY(-80px) rotate(360deg);opacity:0} }
+
+        .section { padding: 50px 24px; text-align: center; }
+        .sec-label { font-family: var(--font-script); color: var(--accent-pink); font-size: 1rem; margin-bottom: 8px; display: block; }
+        .sec-title { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; line-height: 1.3; margin-bottom: 14px; background: linear-gradient(135deg, var(--text-primary), var(--accent-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .sec-text { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.7; }
+
+        /* Reveal animation */
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        /* Photo Lightbox */
+        .memory-card { cursor: pointer; transition: transform 0.3s ease; }
+        .memory-card:active { transform: scale(0.97); }
+
+        /* Stats Section */
+        .love-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            padding: 20px 14px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .stat-emoji { font-size: 1.8rem; margin-bottom: 8px; display: block; }
+        .stat-value { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--accent-purple); display: block; }
+        .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; display: block; }
+
+        /* Quote Banner */
+        .quote-banner {
+            background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(232,67,147,0.08));
+            border: 1px solid var(--border-card);
+            border-radius: 22px;
+            padding: 28px 22px;
+            margin-top: 24px;
+            position: relative;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .quote-banner::before {
+            content: '\201C';
+            font-family: var(--font-display);
+            font-size: 4rem; color: var(--accent-purple);
+            opacity: 0.2; position: absolute; top: 6px; left: 16px; line-height: 1;
+        }
+        .quote-text {
+            font-family: var(--font-script);
+            font-size: 1.15rem;
+            color: var(--accent-pink);
+            line-height: 1.7;
+            position: relative; z-index: 1;
+        }
+        .quote-author {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 12px;
+            position: relative; z-index: 1;
+        }
+
+        /* Spotify Mini */
+        .sp { position: fixed; bottom: 70px; left: 0; right: 0; z-index: 8400; padding: 0 12px; }
+        .sp-bar { background: linear-gradient(135deg,#1a1230,#2a1842); border: 1px solid rgba(168,85,247,.2); border-radius: 14px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; box-shadow: 0 -4px 30px rgba(0,0,0,.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .sp-art { width: 38px; height: 38px; border-radius: 8px; background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+        .sp-info { flex: 1; min-width: 0; }
+        .sp-name { font-size: 0.72rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sp-artist { font-size: 0.6rem; color: var(--text-muted); }
+        .sp-play { width: 32px; height: 32px; border-radius: 50%; background: #fff; color: #000; border: none; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .sp-play:active { transform: scale(0.9); }
+
+        audio { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- Background Effects -->
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+<div class="bg-glow bg-glow-3"></div>
+<div class="particles-box" id="particles"></div>
+
+<main class="main">
+
+    <!-- HERO -->
+    <section class="page-hero">
+        <div class="page-hero-emoji">📖</div>
+        <h1 class="page-hero-title">Our Memory<br>Book</h1>
+        <p class="page-hero-sub">Koleksi momen indah kita</p>
+        <p class="page-hero-desc">Setiap momen bersamamu adalah halaman paling indah dalam buku kehidupanku. 💕</p>
+    </section>
+
+    <!-- LOVE STATS -->
+    <section class="section reveal">
+        <span class="sec-label">📊 Our Numbers</span>
+        <h2 class="sec-title">Love Statistics</h2>
+        <div class="love-stats">
+            <div class="stat-card reveal">
+                <span class="stat-emoji">💕</span>
+                <span class="stat-value" id="statDays">0</span>
+                <span class="stat-label">Hari Bersama</span>
+            </div>
+            <div class="stat-card reveal">
+                <span class="stat-emoji">💬</span>
+                <span class="stat-value">∞</span>
+                <span class="stat-label">Pesan Cinta</span>
+            </div>
+            <div class="stat-card reveal">
+                <span class="stat-emoji">🤗</span>
+                <span class="stat-value">∞</span>
+                <span class="stat-label">Pelukan</span>
+            </div>
+            <div class="stat-card reveal">
+                <span class="stat-emoji">😍</span>
+                <span class="stat-value">∞</span>
+                <span class="stat-label">Senyuman</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- MEMORY TIMELINE -->
+    <section class="section reveal">
+        <span class="sec-label">📸 Momen Kita</span>
+        <h2 class="sec-title">Our Memories</h2>
+        <p class="sec-text">Scroll untuk melihat perjalanan cinta kita ✨</p>
+        <div class="memory-timeline">
+            <div class="memory-entry reveal">
+                <p class="memory-date">✨ Pertama Ketemu</p>
+                <div class="memory-card">
+                    <img src="foto1.jpg" alt="Momen 1" class="memory-img" onerror="this.outerHTML='<div class=\'memory-img-placeholder mg1\'>💫</div>'">
+                    <div class="memory-text">
+                        <h3>Awal Cerita Kita</h3>
+                        <p>Hari di mana semesta mempertemukan kita. Rasanya dunia berhenti sejenak saat pertama kali melihatmu.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="memory-entry reveal">
+                <p class="memory-date">💬 Mulai Dekat</p>
+                <div class="memory-card">
+                    <img src="foto2.jpg" alt="Momen 2" class="memory-img" onerror="this.outerHTML='<div class=\'memory-img-placeholder mg2\'>💖</div>'">
+                    <div class="memory-text">
+                        <h3>Chat Sampai Pagi</h3>
+                        <p>Ngobrol sampai lupa waktu, ketawa bareng, dan mulai ngerasa ada yang beda. Kamu spesial.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="memory-entry reveal">
+                <p class="memory-date">💕 Jadian!</p>
+                <div class="memory-card">
+                    <img src="foto3.jpg" alt="Momen 3" class="memory-img" onerror="this.outerHTML='<div class=\'memory-img-placeholder mg3\'>🥰</div>'">
+                    <div class="memory-text">
+                        <h3>Hari Paling Bahagia</h3>
+                        <p>Akhirnya resmi! Hari yang paling aku tunggu-tunggu. Rasanya dunia jadi lebih berwarna.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="memory-entry reveal">
+                <p class="memory-date">🌟 Kenangan Manis</p>
+                <div class="memory-card">
+                    <img src="foto4.jpg" alt="Momen 4" class="memory-img" onerror="this.outerHTML='<div class=\'memory-img-placeholder mg4\'>✨</div>'">
+                    <div class="memory-text">
+                        <h3>Momen Tak Terlupakan</h3>
+                        <p>Setiap waktu bersamamu adalah kenangan yang ingin aku simpan selamanya di hati.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="memory-entry reveal">
+                <p class="memory-date">📸 Foto Favorit</p>
+                <div class="memory-card">
+                    <img src="foto5.jpg" alt="Momen 5" class="memory-img" onerror="this.outerHTML='<div class=\'memory-img-placeholder mg5\'>🌸</div>'">
+                    <div class="memory-text">
+                        <h3>Kamu Cantik Banget</h3>
+                        <p>Ini salah satu foto favoritku. Kamu selalu terlihat sempurna di mataku.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="memory-entry reveal">
+                <p class="memory-date">❤️ Sekarang & Selamanya</p>
+                <div class="memory-card">
+                    <img src="foto6.jpg" alt="Momen 6" class="memory-img" onerror="this.outerHTML='<div class=\'memory-img-placeholder mg6\'>💝</div>'">
+                    <div class="memory-text">
+                        <h3>Cinta Tanpa Akhir</h3>
+                        <p>Masih bareng, masih sayang, dan cintaku makin besar setiap hari. Aku bersyukur punya kamu.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- QUOTE -->
+    <section class="section reveal">
+        <span class="sec-label">💭 Kata Hati</span>
+        <h2 class="sec-title">For You</h2>
+        <div class="quote-banner">
+            <p class="quote-text">Aku tidak butuh dunia yang sempurna. Aku hanya butuh kamu di sampingku, dan semuanya terasa lengkap.</p>
+            <p class="quote-author">— Rifki, untuk kamu yang paling spesial ♡</p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <section class="section reveal" style="padding-bottom: 160px;">
+        <span class="sec-label">forever & always</span>
+        <h2 class="sec-title">Every Page<br>Is About You</h2>
+        <p class="sec-text">Buku ini belum selesai. Masih banyak halaman kosong yang menunggu diisi momen-momen indah bersama kamu. 📖💕</p>
+        <p style="font-size: 0.6rem; color: var(--text-muted); margin-top: 24px; opacity: 0.5;">Our Memory Book — HBD 9 Agustus 2009 🎂</p>
+    </section>
+
+</main>
+
+<!-- SPOTIFY MINI -->
+<div class="sp">
+    <div class="sp-bar">
+        <div class="sp-art">🎵</div>
+        <div class="sp-info">
+            <p class="sp-name">Lagu Spesial Untukmu</p>
+            <p class="sp-artist">From Rifki with ♡</p>
+        </div>
+        <button class="sp-play" id="playBtn">▶</button>
+    </div>
+</div>
+<audio id="bgMusic" loop preload="auto"><source src="lagumu.mp3" type="audio/mpeg"></audio>
+
+<script>
+    // Music
+    const audio = document.getElementById('bgMusic');
+    const playBtn = document.getElementById('playBtn');
+    let playing = false;
+    playBtn.addEventListener('click', () => {
+        if (playing) { audio.pause(); playBtn.textContent = '▶'; }
+        else { audio.play().catch(()=>{}); playBtn.textContent = '⏸'; }
+        playing = !playing;
+    });
+
+    // Particles
+    (function(){
+        const c = document.getElementById('particles');
+        const e = ['💕','✨','🌟','⭐','🌸','💖','🦋'];
+        for (let i = 0; i < 12; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.textContent = e[Math.floor(Math.random() * e.length)];
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animationDelay = Math.random() * 7 + 's';
+            p.style.animationDuration = (5 + Math.random() * 5) + 's';
+            p.style.fontSize = (0.6 + Math.random() * 0.6) + 'rem';
+            c.appendChild(p);
+        }
+    })();
+
+    // Days together counter (estimate)
+    (function(){
+        const el = document.getElementById('statDays');
+        if (!el) return;
+        // Animate counting
+        let target = 365; // placeholder
+        let current = 0;
+        const step = Math.ceil(target / 60);
+        const int = setInterval(() => {
+            current += step;
+            if (current >= target) { current = target; clearInterval(int); el.textContent = target + '+'; }
+            else el.textContent = current;
+        }, 30);
+    })();
+
+    // Scroll reveal
+    const obs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('visible');
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+<script src="nav.js"></script>
+</body>
+</html>
