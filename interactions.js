@@ -374,8 +374,8 @@ function initQuiz(containerId) {
     function saveQuizResults() {
         const btn = document.getElementById('quizSave');
 
-        if (GAS_URL === "ISI_URL_WEB_APP_DISINI") {
-            if (btn) btn.innerHTML = '❌ DB Belum Disetup';
+        if (typeof GAS_URL === 'undefined' || GAS_URL === "ISI_URL_WEB_APP_DISINI") {
+            if (btn) btn.innerHTML = '❌ URL Belum Disetup';
             return;
         }
 
@@ -394,7 +394,7 @@ function initQuiz(containerId) {
             }
         })
             .then(res => {
-                if (btn) btn.innerHTML = '✅ Terkirim ke DB!';
+                if (btn) btn.innerHTML = '✅ Terkirim!';
             })
             .catch(err => {
                 console.error(err);
@@ -1464,37 +1464,62 @@ function initLoveMessage() {
             btn.style.transform = 'translateY(-150px) scale(0) rotate(15deg)';
             btn.style.opacity = '0';
 
-            setTimeout(() => {
-                btn.style.transform = 'translateY(0) scale(1) rotate(0)';
-                btn.style.opacity = '1';
-                btn.style.background = 'linear-gradient(135deg, #10b981, #059669)'; // Hijau success
-                btn.innerHTML = 'Terkirim! Rifki love u 💕';
-
-                if (typeof createConfetti === 'function') {
-                    try { createConfetti(); } catch (e) { }
-                }
-
-                // Kirim ke GAS (Opsional / Background)
-                if (typeof GAS_URL !== 'undefined') {
-                    const dataPayload = {
-                        type: 'love_message',
-                        message: txt.value,
-                        timestamp: new Date().toLocaleString('id-ID')
-                    };
-                    fetch(GAS_URL, {
-                        method: 'POST',
-                        body: JSON.stringify(dataPayload),
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-                    }).catch(e => console.log(e));
-                }
-
+            if (typeof GAS_URL === 'undefined' || GAS_URL === "ISI_URL_WEB_APP_DISINI") {
+                setTimeout(() => {
+                    btn.style.transform = 'translateY(0) scale(1) rotate(0)';
+                    btn.style.opacity = '1';
+                    btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                    btn.innerHTML = '✅ Terkirim! Rifki love u 💕';
+                    if (typeof createConfetti === 'function') {
+                        try { createConfetti(); } catch (e) { }
+                    }
+                }, 600);
                 txt.value = '';
-
                 setTimeout(() => {
                     btn.style.background = 'linear-gradient(135deg, var(--pink), var(--purple))';
                     btn.innerHTML = 'Send to Rifki 💌';
-                }, 3000);
-            }, 600);
+                }, 4000);
+                return;
+            }
+
+            const dataPayload = {
+                type: 'love_message',
+                message: txt.value,
+                timestamp: new Date().toLocaleString('id-ID')
+            };
+
+            fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify(dataPayload),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            }).then(() => {
+                setTimeout(() => {
+                    btn.style.transform = 'translateY(0) scale(1) rotate(0)';
+                    btn.style.opacity = '1';
+                    btn.style.background = 'linear-gradient(135deg, #10b981, #059669)'; // Hijau success
+                    btn.innerHTML = '✅ Terkirim! Rifki love u 💕';
+
+                    if (typeof createConfetti === 'function') {
+                        try { createConfetti(); } catch (e) { }
+                    }
+                }, 600);
+                txt.value = '';
+                setTimeout(() => {
+                    btn.style.background = 'linear-gradient(135deg, var(--pink), var(--purple))';
+                    btn.innerHTML = 'Send to Rifki 💌';
+                }, 4000);
+            }).catch(e => {
+                console.log(e);
+                setTimeout(() => {
+                    btn.style.transform = 'translateY(0) scale(1) rotate(0)';
+                    btn.style.opacity = '1';
+                    btn.innerHTML = '❌ Gagal Terkirim';
+                }, 600);
+                setTimeout(() => {
+                    btn.style.background = 'linear-gradient(135deg, var(--pink), var(--purple))';
+                    btn.innerHTML = 'Send to Rifki 💌';
+                }, 4000);
+            });
         }, 1200);
     });
 }
