@@ -406,7 +406,12 @@ function initQuiz(containerId) {
     function saveQuizResults() {
         const btn = document.getElementById('quizSave');
 
-        const message = `🎯 *Hasil Quiz HBD*\n\nSkor: ${score}/${questions.length}\nJawaban: ${JSON.stringify(userAnswers)}\nWaktu: ${new Date().toLocaleString('id-ID')}`;
+        let answerText = "";
+        userAnswers.forEach((ans, idx) => {
+            answerText += `\n${idx + 1}. ${ans.question}\n   Jawab: ${ans.chosen} ${ans.isCorrect ? '✅' : '❌'}\n`;
+        });
+
+        const message = `🎯 *Hasil Quiz HBD*\n\nSkor: ${score}/${questions.length}\n${answerText}\nWaktu: ${new Date().toLocaleString('id-ID')}`;
 
         sendToTelegram("text", message)
             .then(() => {
