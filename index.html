@@ -1018,19 +1018,7 @@
 </head>
 
 <body>
-    <!-- LOCK SCREEN OVERLAY -->
-    <div id="lockScreen" class="lock-screen">
-        <div class="lock-content">
-            <div class="lock-icon" id="lockIcon">🔒</div>
-            <h2 class="lock-title">Website Terkunci</h2>
-            <p class="lock-desc">Kejutan buat Amma baru bisa dibuka pada<br><strong>9 Agustus 2026, 00:00 WIB</strong>
-            </p>
-            <div class="lock-countdown" id="lockCountdown">Menghitung waktu...</div>
-            <button id="unlockBtn"
-                style="display:none; margin-top: 15px; background: var(--pink); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-family: var(--f2);">Buka
-                Kejutan 🎁</button>
-        </div>
-    </div> <!-- SPOTIFY MINI -->
+    <!-- NO LOCK SCREEN --> <!-- SPOTIFY MINI -->
     <div class="sp">
         <div class="sp-bar" style="flex-direction: column; align-items: stretch; gap: 6px;">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -1636,58 +1624,7 @@
         if (typeof initGiftBox === 'function') initGiftBox('giftBox');
     </script>
     <script>
-        // LOCK SCREEN LOGIC
-        const unlockDate = new Date("2026-05-28T00:01:00").getTime();
-        const lockScreen = document.getElementById("lockScreen");
-        const lockIcon = document.getElementById("lockIcon");
-        const lockCountdown = document.getElementById("lockCountdown");
-
-        function updateLockScreen() {
-            if (!lockScreen) return;
-            const now = new Date().getTime();
-            const distance = unlockDate - now;
-
-            if (distance < 0) {
-                // Time has passed, show button!
-                lockCountdown.innerHTML = "Waktu telah tiba! 🎉";
-                const unlockBtn = document.getElementById("unlockBtn");
-                if (unlockBtn && unlockBtn.style.display === "none") {
-                    unlockBtn.style.display = "inline-block";
-                    unlockBtn.addEventListener("click", () => {
-                        // Play audio on user interaction to bypass iOS policy
-                        const audio = document.getElementById('bgMusic');
-                        const playBtn = document.getElementById('playBtn');
-                        if (audio) {
-                            audio.play().catch(e => console.log("Autoplay prevented:", e));
-                            if (playBtn) playBtn.textContent = '⏸';
-                            if (typeof playing !== 'undefined') playing = true;
-                        }
-
-                        if (lockIcon.innerHTML !== "🔓") {
-                            lockIcon.innerHTML = "🔓";
-                            lockIcon.classList.add("unlocking");
-                            unlockBtn.style.display = "none";
-
-                            setTimeout(() => {
-                                lockScreen.classList.add("hidden-lock");
-                            }, 1500);
-                        } else {
-                            lockScreen.classList.add("hidden-lock");
-                        }
-                    });
-                }
-            } else {
-                // Calculate time
-                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                lockCountdown.innerHTML = `${days}h ${hours}j ${minutes}m ${seconds}s`;
-                setTimeout(updateLockScreen, 1000);
-            }
-        }
-        updateLockScreen();
+        // TIDAK ADA LOCK SCREEN PADA VERSI INI
     </script>
 
     <!-- LIGHTBOX GALERI FOTO -->
