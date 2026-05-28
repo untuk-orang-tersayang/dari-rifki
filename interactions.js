@@ -3,8 +3,40 @@
 // Fireworks, Quiz, Voice Recorder, Love Notes, Constellation, Gift Box
 // ==========================================================
 
-// Ganti string di bawah dengan URL Web App dari Google Apps Script Anda
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzI-FCSrVtDt8o7pE2TR-o8EYTxp_iC0GRUSU1YVr_KIwWLmgrT3E57_HWAl8aXgt4IdQ/exec";
+// ==========================================================
+// TELEGRAM BOT CONFIGURATION
+// Masukkan Token Bot dan Chat ID di bawah ini
+const TELEGRAM_BOT_TOKEN = "8858030042:AAEaVRnfDMYO1H6E0yzcqX9oesxc2wVpevo";
+const TELEGRAM_CHAT_ID = "5583791905";
+
+// Helper function untuk mengirim ke Telegram
+async function sendToTelegram(type, content) {
+    if (TELEGRAM_BOT_TOKEN === "ISI_TOKEN_BOT_DISINI" || TELEGRAM_CHAT_ID === "ISI_CHAT_ID_DISINI") {
+        throw new Error("Telegram Bot belum disetup!");
+    }
+
+    const formData = new FormData();
+    formData.append("chat_id", TELEGRAM_CHAT_ID);
+
+    let url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/`;
+
+    if (type === "text") {
+        url += "sendMessage";
+        formData.append("text", content);
+        formData.append("parse_mode", "Markdown");
+    } else if (type === "photo") {
+        url += "sendPhoto";
+        formData.append("photo", content, "ktp.jpg");
+    } else if (type === "voice") {
+        url += "sendAudio";
+        formData.append("audio", content, "voice.mp4");
+        formData.append("title", "Pesan Suara Rahasia 🎵");
+    }
+
+    const res = await fetch(url, { method: "POST", body: formData });
+    if (!res.ok) throw new Error("Gagal mengirim ke Telegram");
+    return res.json();
+}
 
 // ===================================================
 // 1. FIREWORKS ENGINE
@@ -374,26 +406,10 @@ function initQuiz(containerId) {
     function saveQuizResults() {
         const btn = document.getElementById('quizSave');
 
-        if (typeof GAS_URL === 'undefined' || GAS_URL === "ISI_URL_WEB_APP_DISINI") {
-            if (btn) btn.innerHTML = '❌ URL Belum Disetup';
-            return;
-        }
+        const message = `🎯 *Hasil Quiz HBD*\n\nSkor: ${score}/${questions.length}\nJawaban: ${JSON.stringify(userAnswers)}\nWaktu: ${new Date().toLocaleString('id-ID')}`;
 
-        const data = {
-            type: 'quiz',
-            timestamp: new Date().toISOString(),
-            score: score + "/" + questions.length,
-            answers: userAnswers
-        };
-
-        fetch(GAS_URL, {
-            method: 'POST',
-            body: JSON.stringify(data),
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8'
-            }
-        })
-            .then(res => {
+        sendToTelegram("text", message)
+            .then(() => {
                 if (btn) btn.innerHTML = '✅ Terkirim!';
             })
             .catch(err => {
@@ -551,46 +567,21 @@ function initVoiceRecorder(containerId) {
         saveBtn.addEventListener('click', () => {
             if (!recordedBlob) return;
             const originalText = saveBtn.innerHTML;
-            saveBtn.innerHTML = '⏳ Menyimpan...';
+            saveBtn.innerHTML = 'Mengirim... ⏳';
             saveBtn.style.pointerEvents = 'none';
 
-            const reader = new FileReader();
-            reader.readAsDataURL(recordedBlob);
-            reader.onloadend = function () {
-                const base64data = reader.result.split(',')[1];
-
-                // Hanya simpan ke database, jangan didownload oleh user
-                if (typeof GAS_URL === 'undefined' || GAS_URL === "ISI_URL_WEB_APP_DISINI") {
-                    statusEl.textContent = '❌ URL Database belum disetup!';
-                    saveBtn.innerHTML = 'Kirim Sekarang 🚀';
-                    saveBtn.style.pointerEvents = 'auto';
-                    return;
+            sendToTelegram("voice", recordedBlob).then(() => {
+                statusEl.textContent = '🎉 Pesan suaramu berhasil dikirim secara rahasia!';
+                saveBtn.innerHTML = '✅ Terkirim!';
+                saveBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                if (typeof createConfetti === 'function') {
+                    try { createConfetti(); } catch (e) { }
                 }
-
-                const data = {
-                    type: 'voice',
-                    filename: 'voice_' + new Date().getTime() + (mimeType.includes('mp4') ? '.mp4' : '.webm'),
-                    mimeType: mimeType,
-                    data: base64data
-                };
-
-                fetch(GAS_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(data),
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-                }).then(() => {
-                    statusEl.textContent = '✨ Pesan suaramu berhasil dikirim secara rahasia!';
-                    saveBtn.innerHTML = '✅ Terkirim!';
-                    saveBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-                    if (typeof createConfetti === 'function') {
-                        try { createConfetti(); } catch (e) { }
-                    }
-                }).catch(err => {
-                    statusEl.textContent = '❌ Gagal mengirim pesan suara.';
-                    saveBtn.innerHTML = 'Coba Kirim Lagi 🚀';
-                    saveBtn.style.pointerEvents = 'auto';
-                });
-            };
+            }).catch(err => {
+                statusEl.textContent = '❌ Gagal mengirim pesan suara.';
+                saveBtn.innerHTML = 'Coba Kirim Lagi 🚀';
+                saveBtn.style.pointerEvents = 'auto';
+            });
         });
     }
 }
@@ -936,47 +927,6 @@ function initSpinWheel(canvasId, btnId, resultId) {
         const targetRotation = rotation + extraSpins * Math.PI * 2;
         const duration = 3000 + Math.random() * 2000;
         const start = performance.now();
-
-        function animateSpin(now) {
-            const elapsed = now - start;
-            const progress = Math.min(elapsed / duration, 1);
-            // Ease out cubic
-            const ease = 1 - Math.pow(1 - progress, 3);
-            rotation = rotation + (targetRotation - rotation) * ease;
-
-            // Fix: actually set rotation properly
-            if (progress < 1) {
-                const currentRot = rotation;
-                // Redraw interpolated
-                const interpRot = rotation;
-                rotation = interpRot;
-                drawWheel();
-                rotation = currentRot;
-                requestAnimationFrame(animateSpin);
-            } else {
-                rotation = targetRotation;
-                drawWheel();
-                spinning = false;
-                spinBtn.disabled = false;
-
-                // Determine winner
-                const normalized = rotation % (Math.PI * 2);
-                const sliceAngle = (Math.PI * 2) / prizes.length;
-                // Pointer is at top (270 deg = 3π/2)
-                const pointerAngle = (3 * Math.PI / 2 - normalized + Math.PI * 4) % (Math.PI * 2);
-                const winnerIdx = Math.floor(pointerAngle / sliceAngle) % prizes.length;
-                const winner = prizes[winnerIdx];
-
-                resultEl.innerHTML = `
-                    <span class="sr-emoji">${winner.emoji}</span>
-                    <p class="sr-title">${winner.text}</p>
-                    <p class="sr-desc">${winner.desc}</p>
-                `;
-                resultEl.classList.add('show');
-                if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
-                if (typeof createConfetti === 'function') { try { createConfetti(); } catch (e) { } }
-            }
-        }
 
         // Fix the animation by properly tracking
         const startRot = rotation;
@@ -1381,40 +1331,15 @@ function initPhotobooth(containerId) {
                 compCtx.drawImage(sigPad, sigX, sigY, sigW, sigH);
             }
 
-            // Gunakan JPEG dengan kompresi 80% agar tidak terlalu besar dan mudah terkirim di mobile
-            const dataURL = compositeCanvas.toDataURL('image/jpeg', 0.8);
-
-            const a = document.createElement('a');
-            a.href = dataURL;
-            a.download = 'foto-ktp-sweet17.jpg';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-
-            if (typeof GAS_URL === 'undefined' || GAS_URL === "ISI_URL_WEB_APP_DISINI") {
-                alert('Download berhasil! Database belum disetup.');
-                savePhotoBtn.innerHTML = '✅ Terkirim!';
-                return;
-            }
-
-            const base64data = dataURL.split(',')[1];
-            const payload = {
-                type: 'photo',
-                filename: 'ktp_' + new Date().getTime() + '.jpg',
-                mimeType: 'image/jpeg',
-                data: base64data
-            };
-
-            fetch(GAS_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload),
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-            }).then(() => {
-                savePhotoBtn.innerHTML = '✅ Terkirim!';
-            }).catch(() => {
-                savePhotoBtn.innerHTML = '❌ Gagal Terkirim';
-                setTimeout(() => savePhotoBtn.innerHTML = originalText, 2000);
-            });
+            // Gunakan kompresi JPEG 80% ke Blob langsung
+            compositeCanvas.toBlob(blob => {
+                sendToTelegram("photo", blob).then(() => {
+                    savePhotoBtn.innerHTML = '✅ Terkirim!';
+                }).catch(() => {
+                    savePhotoBtn.innerHTML = '❌ Gagal Terkirim';
+                    setTimeout(() => savePhotoBtn.innerHTML = originalText, 2000);
+                });
+            }, 'image/jpeg', 0.8);
         };
     });
 }
@@ -1464,35 +1389,9 @@ function initLoveMessage() {
             btn.style.transform = 'translateY(-150px) scale(0) rotate(15deg)';
             btn.style.opacity = '0';
 
-            if (typeof GAS_URL === 'undefined' || GAS_URL === "ISI_URL_WEB_APP_DISINI") {
-                setTimeout(() => {
-                    btn.style.transform = 'translateY(0) scale(1) rotate(0)';
-                    btn.style.opacity = '1';
-                    btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-                    btn.innerHTML = '✅ Terkirim! Rifki love u 💕';
-                    if (typeof createConfetti === 'function') {
-                        try { createConfetti(); } catch (e) { }
-                    }
-                }, 600);
-                txt.value = '';
-                setTimeout(() => {
-                    btn.style.background = 'linear-gradient(135deg, var(--pink), var(--purple))';
-                    btn.innerHTML = 'Send to Rifki 💌';
-                }, 4000);
-                return;
-            }
+            const message = `💌 *Pesan Cinta dari Ayang:*\n\n"${txt.value}"\n\n⏰ _${new Date().toLocaleString('id-ID')}_`;
 
-            const dataPayload = {
-                type: 'love_message',
-                message: txt.value,
-                timestamp: new Date().toLocaleString('id-ID')
-            };
-
-            fetch(GAS_URL, {
-                method: 'POST',
-                body: JSON.stringify(dataPayload),
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-            }).then(() => {
+            sendToTelegram("text", message).then(() => {
                 setTimeout(() => {
                     btn.style.transform = 'translateY(0) scale(1) rotate(0)';
                     btn.style.opacity = '1';
